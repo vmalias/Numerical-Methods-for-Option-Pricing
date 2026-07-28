@@ -1,4 +1,4 @@
-A financial derivative is nothing more than a contract between two counterparties
+A financial derivative is nothing more than a contract between two counterparties
 that stipulates the purchase or sale of a certain quantity (and
 quality) of a good or security (called the underlying product) at one (or up
 to one) predetermined future moment and price. Underlying product in such
