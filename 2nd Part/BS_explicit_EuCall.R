@@ -1,0 +1,34 @@
+BS_explicit_EuCall = function(So,K,T,sigma,r,Smax,dS,dt){
+  
+  M = round(Smax/dS)
+  dS = Smax/M
+  N = round(T/dt)
+  dt = T/N
+  Price = matrix(0, nrow = M+1, ncol = N+1)
+  
+  vetS = seq(0, Smax, dS)
+  veti = seq(0, M)
+  vetj = seq(0, N)
+  
+  Price[,N+1] = pmax(vetS - K, 0)
+  Price[1,] = 0
+  Price[M+1,] = Smax - (K * exp(-r*dt*(N-vetj)))
+  
+  a = 0.5*dt*(sigma^2*veti^2 - r*veti)
+  b = 1 - dt*(sigma^2*veti^2 + r)
+  c = 0.5*dt*(sigma^2*veti^2 + r*veti)
+  
+  for (j in seq(N,1,-1)) {
+    for (i in seq(2,M)) {
+      Price[i,j] = a[i]*Price[i-1,j+1] + b[i]*Price[i,j+1] + c[i]*Price[i+1,j+1]
+    }
+  }
+  
+  approximation = approx(vetS,Price[,1],So)
+  return(approximation$y)
+}
+
+explicit_EuCall = BS_explicit_EuCall(17,15,6/12,0.35,0.07,50,1,5/1200)
+
+
+
