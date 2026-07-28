@@ -1,68 +1,9 @@
-A financial derivative is nothing more than a contract between two counterparties
-that stipulates the purchase or sale of a certain quantity (and
-quality) of a good or security (called the underlying product) at one (or up
-to one) predetermined future moment and price. Underlying product in such
-an agreement can be practically anything. For example, it can be a nan-
-cial instrument (e.g. bond, share), a commodity (e.g. gold, corn, cotton),
-a stock index (e.g. FTSE100, NASDAQ), a reference rate (e.g. LIBOR),
-some exchange rate (e.g. euro/yen), the weather (weather derivatives) or
-even some other derivative. Such agreements are traded either on regulated 
-stock markets or over-the-counter and
-may be binding equally on both parties or only on one party. Nowadays,
-the use of such agreements is imperative by investors, both for reasons of
-insecurity against the various nancial risks to which they are exposed, and
-for making a prot.
-As it is understood, there are many dierent types of derivative products,
-the most well-known of which are: Forwards, Futures, Swaps and nally
-Options, which are the subject of this work. The main dierence between
-the options and the other derivatives is that they give their buyer the right
-and not the obligation to exercise the contract in his possession (i.e. to
-buy or sell the underlying product in accordance with the predetermined
-terms). It is therefore obvious that the buyer of an option is in a more
-advantageous position vis-a-vis the seller of the right, who, in the event that
-the buyer decides to exercise, is obliged to comply with the terms of the
-contract between them. Because of this advantage, the buyer pays the seller
-a fee, at the maturity, to take in his possession the right, which is known as
-the premium option or option price.
-Finding this price is a particularly demanding problem, mainly due to the
-randomness that characterizes the evolution of the prices of the underlying
-securities/commodities, on which the option is structured. Various pricing
-models have been proposed from time to time to solve this problem, the
-most famous of all being the Black-Scholes model [10]. This model is a
-model in real time and is essentially a model in a closed form for the pricing
-of European type of options (i.e. options that can only be exercised at
-maturity). Despite its usefulness, the Black-Scholes model cannot be used
-to price rights that have a more complex structure than European ones,
-such as American options (these can be exercised at any time until their
-expiration). A classic way to address this problem is with the help of the
-binomial or even the trinomial pricing model.
-The binomial pricing model, in its best-known form, is based on an
-original concept of Sharpe, which was expanded by the Cox, Ross and
-Rubinstein. The philosophy of this model is very simple and is based
-on the assumption that at the next point in time the underlying title can
-get only two possible values, one upward or one downward. The trinomial
-pricing model (Boyle, Kamrad and Ritchken) is a direct extension
-of the binomial model whose basic assumption is that at the next point in
-time the underlying title can get three possible values instead of the two
-assumed by the binomial model, one upward, one downward or its price
-may not change. Despite their simple nature, these models can be used
-quite satisfactorily to price exotic rights (e.g. American options, options
-with barriers, etc.). Of course, these templates are not the only ones that
-exist for pricing options. Many other models/numerical procedures for the
-pricing of options have been proposed from time to time (e.g. models based
-on Monte-Carlo simulation techniques, machine learning techniques, finite
-difference method, etc.).
-This paper is divided into two parts. In the first part, after a detailed
-introduction to the issue of option pricing and some key elements have been
-presented, the binomial pricing model (Cox, Ross and Rubinstein), and
-the trinomial pricing model (Kamrad and Ritchken) are presented in
-detail. These models will then be compared with each other (both in terms
-of the accuracy of the approach and in terms of the speed of convergence
-at the (theoretical) reference price) in the case of: (a) a European right to
-buy, (b) the European put option, and (c) the US right to sell. For this
-purpose, and for each of the above cases, various useful statistical criteria
-will be used, e.g. minimum convergence step, root mean square error, etc.,
-which will help us to draw useful conclusions. In the second part, we return
-to the trinomial pricing model and see it from a different perspective. More
-specifically, we examine the connection of the trinomial model with the finite
-difference method for the numerical solution of the Black-Scholes equation.
+A financial derivative is nothing more than a contract between two counterparties that stipulates the purchase or sale of a certain quantity (and quality) of a good or security (called the underlying asset) at one predetermined future moment and price. The underlying asset in such an agreement can be practically anything. For example, it can be a financial instrument (e.g., a bond or share), a commodity (e.g., gold, corn, cotton), a stock index (e.g., FTSE100, NASDAQ), a reference rate (e.g., LIBOR), an exchange rate (e.g., EUR/JPY), the weather (weather derivatives), or even another derivative (see, e.g., Poufinas & Floros). Such agreements are traded either on regulated stock exchanges or over-the-counter, and may be binding on both parties equally or on only one party. Nowadays, the use of such agreements is essential for investors, both to hedge against the various financial risks to which they are exposed and to make a profit.
+
+As is well known, there are many different types of derivative products, the most well-known of which are forwards, futures, swaps, and, finally, options, which are the subject of this work. The main difference between options and other derivatives is that options give their buyer the right, but not the obligation, to exercise the contract (i.e., to buy or sell the underlying asset in accordance with the predetermined terms). It is therefore evident that the buyer of an option is in a more advantageous position than the seller of the right, who, should the buyer decide to exercise, is obliged to comply with the terms of the contract between them. Because of this advantage, the buyer pays the seller a fee at the outset of the contract to acquire this right; this fee is known as the option premium, or option price.
+
+Determining this price is a particularly demanding problem, mainly due to the randomness that characterizes the evolution of the prices of the underlying securities or commodities on which the option is based. Various pricing models have been proposed over time to address this problem, the most famous of which is the Black-Scholes model. This model operates in continuous time and is essentially a closed-form model for pricing European-style options (i.e., options that can only be exercised at maturity). Despite its usefulness, the Black-Scholes model cannot be used to price derivatives with a more complex structure than European options, such as American options (which can be exercised at any time up to their expiration). A classic way of addressing this problem is with the help of the binomial or trinomial pricing models.
+
+The binomial pricing model, in its best-known form, is based on an original concept of Sharpe, which was later expanded upon by Cox, Ross, and Rubinstein. The underlying philosophy of this model is very simple and is based on the assumption that, at the next point in time, the underlying asset can take only one of two possible values: an upward move or a downward move. The trinomial pricing model (Boyle, Kamrad, and Ritchken) is a direct extension of the binomial model, whose basic assumption is that, at the next point in time, the underlying asset can take one of three possible values instead of the two assumed by the binomial model: an upward move, a downward move, or no change in price. Despite their simple nature, these models can be used quite satisfactorily to price exotic derivatives (e.g., American options, barrier options, etc.). Of course, these are not the only models that exist for pricing options; many other models and numerical procedures for option pricing have been proposed over time (e.g., models based on Monte Carlo simulation techniques, machine learning techniques, the finite difference method, etc.).
+
+This thesis is divided into two parts. In the first part, following a detailed introduction to the issue of option pricing and the presentation of some key concepts, the binomial pricing model (Cox, Ross, and Rubinstein) and the trinomial pricing model (Kamrad and Ritchken) are presented in detail. These models are then compared with each other, both in terms of the accuracy of the approximation and the speed of convergence to the (theoretical) reference price, in the following cases: (a) a European call option, (b) a European put option, and (c) an American put option. For this purpose, and for each of the above cases, various useful statistical criteria are employed, e.g., the minimum convergence step and the root mean square error, which help us draw useful conclusions. In the second part, we return to the trinomial pricing model and examine it from a different perspective. More specifically, we investigate the connection between the trinomial model and the finite difference method for the numerical solution of the Black-Scholes equation.
