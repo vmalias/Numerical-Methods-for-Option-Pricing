@@ -19,12 +19,12 @@ KammradAmEuCall = function(S,K,T,N,l,sigma,r){
     }
   }
   
-  return(Kammrad[1])
+  return(Kammrad[1,1])
 }
 
 
 # Endly, the way to programm Kammrad tree, is exactly
 # the same with Boyle's tree, except for probabilities computation. 
 
-KammradAmEuCall(100,100,1,50,1.22474,0.2,0.05)
+KammradAmEuCall(100,100,1,20,1.22474,0.2,0.05)
 

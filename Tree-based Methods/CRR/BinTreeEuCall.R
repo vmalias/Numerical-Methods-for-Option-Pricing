@@ -28,7 +28,7 @@ for (j in 0:i){
  }
 }
 #print(paste("European Call Option Price is:", round(tree[1,1],3)))
-return(tree)
+return(tree[1,1])
 }
 
-BinTreeEuCall(155.87,155.87,3,12,0.011733586,0.0086)
+BinTreeEuCall(100,100,1,20,0.2,0.05)

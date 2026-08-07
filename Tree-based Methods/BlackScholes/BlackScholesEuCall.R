@@ -19,4 +19,4 @@ BlackScholesEuCall <- function(S0,K,T,sigma,r){
 }
 
 # An example of inputs:
-# BlackScholesEuCall(155.87,155.87,3,0.011733586,0.0086)
+BlackScholesEuCall(100,100,1,0.2,0.01)

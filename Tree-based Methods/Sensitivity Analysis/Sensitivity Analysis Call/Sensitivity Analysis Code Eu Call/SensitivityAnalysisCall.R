@@ -1,493 +1,556 @@
+# In the following lines of code we conduct the parameter analysis of the Tree-based Models
+# of Cox-Ross-Rubinstein and Kamrad-Ritcken for the case of the Europen call option. 
+# The Trinomial model of Kamrad-Ritcken introduces another parameter called λ, which will 
+# be examined further in the last section of the script. Up until then we fix λ = 1.22474,
+# which is the value that Tian (1993) proposed.
+# When we examine how the change of a parameter's value affects the price of the European call,
+# we assign the other parameters an indicative value whithin a reasonable range e.g. risk free 
+# rate is difficult to reach the level of 20%.
+
+# Loaded libraries
 library(ggplot2)
-library(tibble)
+# library(tibble)
 library(openxlsx)
 
-########################################################################################
-##################################   Lamda = 1.22474   #################################
-########################################################################################
+# Common Parameters of the Black-Scholes formula, the Cox-Ross-Rubinstein 
+# binomial model and the Kamrad-Ritchken trinomial model. 
+# ========================================================================
+# strike_price : Strike Price
+# T : Maturity
+# sigma : Volatility of the underlying asset
+# r : Risk-free rate                             
+# =========================================================================
 
+
+# Extra parameter used by the iterative Tree-based models.
+# ========================================================
+# Periods : Number of iterations 
+# ========================================================
+
+
+# Special parameter of the Kamrad-Ritchken trinomial tree.
+# ========================================================
+# lambda : Parameter λ
+# ========================================================
+
+# Create preliminary sequences for different numbers of iterations/periods,
+# strike prices and values of the parameter λ.
+# We are going to use them throughout the code.
+# ================================
 Periods = seq(5,100)
-K = seq(60,140,1)
-DiffKamRit = matrix(0, length(Periods), length(K))
-KamRit = matrix(0, length(Periods), length(K))
-DiffCRR = matrix(0, length(Periods), length(K))
-CRR = matrix(0, length(Periods), length(K))
-BS = matrix(0, 1, length(K))
+
+strike_price = seq(60,140,1)
+
+lamda  = seq(1.1,2.1,0.2)
+# Tian's λ
+lamda[2] = 1.22474
+# ================================
+
+# Matrices initialized with zeros, which for every combination of numbers of periods 
+# and strike price (Black-Scholes has no periods) contain the values of:
+
+# 1. Black-Scholes formula
+bs_strike_price = matrix(0, 1, length(strike_price))
+
+# 2. Cox-Ross-Rubinstein binomial model
+crr_strike_price = matrix(0, length(Periods), length(strike_price))
+
+# 3. Kamrad-Ritcken trinomial model
+kr_strike_price = matrix(0, length(Periods), length(strike_price))
+
+# 4. The distance between the binomial model and the "real value"
+diff_crr_strike_price = matrix(0, length(Periods), length(strike_price))
+
+# 5. The distance between the trinomial model and the "real value"
+diff_kr_strike_price = matrix(0, length(Periods), length(strike_price))
 
 
+# In this section we are going to study grafically the behaviour 
+# of the models for different values of the strike price (strike_price)
+# and number of periods, while fixing the following values:
+# ===============================================================
+# S0 = 100
+# T = 1
+# volatility = 0.2
+# r = 0.05                            
+# ===============================================================
+
+
+# Calculate 1
+for (j in seq(1,length(strike_price))) {
+  bs_strike_price[j] = BlackScholesEuCall(100,strike_price[j],1,0.2,0.05)
+}
+
+# Calculate 2-5
 for (i in seq(1,length(Periods))) {
-  for (j in seq(1,length(K))) {
-    CRR[i,j] = BinTreeEuCall(100,K[j],1,Periods[i],0.2,0.05)
-    KamRit[i,j] = KammradAmEuCall(100,K[j],1,Periods[i],1.22474,0.2,0.05)
-    BS[j] = BlackScholesEuCall(100,K[j],1,0.2,0.05)
-    DiffCRR[i,j] = - BinTreeEuCall(100,K[j],1,Periods[i],0.2,0.05) + BlackScholesEuCall(100,K[j],1,0.2,0.05)
-    DiffKamRit[i,j] =  - KammradAmEuCall(100,K[j],1,Periods[i],1.22474,0.2,0.05) + BlackScholesEuCall(100,K[j],1,0.2,0.05)
+  for (j in seq(1,length(strike_price))) {
+    crr_strike_price[i,j] = BinTreeEuCall(100,strike_price[j],1,Periods[i],0.2,0.05)
+    kr_strike_price[i,j] = KammradAmEuCall(100,strike_price[j],1,Periods[i],1.22474,0.2,0.05)
+    diff_crr_strike_price[i,j] = bs_strike_price[j] - BinTreeEuCall(100,strike_price[j],1,Periods[i],0.2,0.05)
+    diff_kr_strike_price[i,j] = bs_strike_price[j] - KammradAmEuCall(100,strike_price[j],1,Periods[i],1.22474,0.2,0.05)
   }
 }
 
-colnames(CRR) <- as.character(K)
-rownames(CRR) <- as.character(Periods)
+# Apply the corresponding number of periods and strike price
+# as row name and column name, respectively.
+# ==================================================================================================
+set_dimnames = function(mats, rownames_val, colnames_val) {
+  lapply(mats, function(m) {
+    rownames(m) = as.character(rownames_val)
+    colnames(m) = as.character(colnames_val)
+    m
+  })
+}
 
-colnames(KamRit) <- as.character(K)
-rownames(KamRit) <- as.character(Periods)
+named = set_dimnames(list(CRRStrikePrice = crr_strike_price, KRStrikePrice = kr_strike_price, DiffCRRStrikePrice = diff_crr_strike_price, DiffKRStrikePrice = diff_kr_strike_price),
+                       rownames_val = Periods, colnames_val = strike_price)
+crr_strike_price = named$CRRStrikePrice; kr_strike_price = named$KRStrikePrice; diff_crr_strike_price = named$DiffCRRStrikePrice; diff_kr_strike_price = named$DiffKRStrikePrice
 
-colnames(BS) <- as.character(K)
+# bs_strike_price has no Periods dimension, so it's separate
+colnames(bs_strike_price) = as.character(strike_price)   
+# ==================================================================================================
 
-colnames(DiffCRR) <- as.character(K)
-rownames(DiffCRR) <- as.character(Periods)
+# Save the values of the quantities we calculated previously in a .xlsx file, which contains
+# five different sheets that correspond to each matrix.
+data_list = list(CRR_Strike_Price = crr_strike_price, KR_Strike_Price = kr_strike_price, BS_Strike_Price = bs_strike_price, Diff_CRR_Strike_Price = diff_crr_strike_price, Diff_KR_Strike_Price = diff_kr_strike_price)
 
-colnames(DiffKamRit) <- as.character(K)
-rownames(DiffKamRit) <- as.character(Periods)
+write.xlsx(data_list, "results_strike_price.xlsx", colNames = TRUE, rowNames = TRUE)
 
-#write.xlsx(CRR, "CRR.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(KamRit, "KamRit.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(BS, "BS.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(DiffCRR, "DiffCRR.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(DiffKamRit, "DiffKamRit.xlsx", colNames = TRUE, rowNames = TRUE)
-MappingSo = data.frame((DiffCRR[nrow(DiffCRR),]), (DiffKamRit[nrow(DiffKamRit),]))
-colnames(MappingSo) = c("DiffCRR" , "DiffKamRit")
 
-ggplot(MappingSo)+
-  geom_line(mapping = aes(x = K, y = DiffKamRit, col = "KR"))+
-  geom_line(mapping = aes(x = K, y = DiffCRR, col = "CRR"))+
+# Data frame with distances of both tree-based models from Black-Scholes,
+# at the maximum period count, across strike prices
+mapping_strike_price <- data.frame(
+  Strike_Price = strike_price,
+  Diff_CRR_Strike_Price = diff_crr_strike_price[nrow(diff_crr_strike_price), ],
+  Diff_KR_Strike_Price = diff_kr_strike_price[nrow(diff_kr_strike_price), ]
+)
+
+p <- ggplot(mapping_strike_price) +
+  geom_line(aes(x = Strike_Price, y = Diff_KR_Strike_Price, col = "KR")) +
+  geom_line(aes(x = Strike_Price, y = Diff_CRR_Strike_Price, col = "CRR")) +
   scale_color_manual(values = c('KR' = 'cornflowerblue', 'CRR' = 'deeppink4')) +
-  labs(color = '')+
-  xlab("Strike Price (K)")+
-  ylab("Distance of Black-Scholes")+
-  theme_classic()+
-  theme(legend.position = "right")+
-  ggtitle("Strike Price Sensitivity Analysis European Call")
+  labs(color = '') +
+  xlab("Strike Price") +
+  ylab("Distance from Black-Scholes value") +
+  theme_classic() +
+  theme(legend.position = "right")
+
+print(p)
+ggsave("distance_from_bs_strike_price.png", plot = p, width = 7, height = 5, dpi = 300)
 
 
 
 ########################################################################################
-##################################   K = 90    #########################################
 ########################################################################################
 
-Periods = seq(5,100)
-lamda  = seq(1.1,2.1,0.2)
-lamda[2] = 1.22474
-DiffKamRit90 = matrix(0, length(Periods), length(lamda))
-DiffCRR90 = matrix(0, length(Periods), 1)
+# In this section we are going to study the behaviour of the models for three different
+# values of the strike price (K):
 
+# 1. K = 90 (In The Money)
+# 2. K = 100 (At The Money)
+# 3. K = 110 (Out of The Money)
+
+# We change the number of periods the lattice models should run and the parameter λ, 
+# because we want to paint the full picture of the trinomial model's possibilities.
+# We fix the values:
+# ===============================================================
+# S0 = 100
+# T = 1
+# volatility = 0.2
+# r = 0.05                            
+# ===============================================================
+
+
+##################################   Stike Price = 90    #########################################
+
+# Matrices initialized with zeros, which for every combination of numbers of periods 
+# and λ contain:
+
+# 1. The distance between the binomial model and the "real value"
+diff_crr_strike_price_90 = matrix(0, length(Periods), 1)
+
+# 2. The distance between the trinomial model and the "real value"
+diff_kr_strike_price_90 = matrix(0, length(Periods), length(lamda))
+
+# Black-Scholes/"real" value for Strike Price = 90
+bs_strike_price_90 = BlackScholesEuCall(100,90,1,0.2,0.05)
+
+# Calculate 1 and 2
 for (i in seq(1,length(Periods))) {
-  DiffCRR90[i] = - BinTreeEuCall(100,90,1,Periods[i],0.2,0.05) + BlackScholesEuCall(100,90,1,0.2,0.05)
+  diff_crr_strike_price_90[i] = bs_strike_price_90 - BinTreeEuCall(100,90,1,Periods[i],0.2,0.05)
   for (j in seq(1,length(lamda))) {
-    DiffKamRit90[i,j] = - KammradAmEuCall(100,90,1,Periods[i],lamda[j],0.2,0.05) + BlackScholesEuCall(100,90,1,0.2,0.05)
+    diff_kr_strike_price_90[i,j] = bs_strike_price_90 - KammradAmEuCall(100,90,1,Periods[i],lamda[j],0.2,0.05)
   }
 }
-colnames(DiffKamRit90) <- as.character(lamda)
-rownames(DiffKamRit90) <- as.character(Periods)
-rownames(DiffCRR90) <- as.character(Periods)
-colnames(DiffCRR90) <- "CRR"
 
-Mapping90 = data.frame(DiffKamRit90, DiffCRR90)
-colnames(Mapping90) <- c("Lamda_1.1", "Lamda_1.22474", "Lamda_1.5", "Lamda_1.7", "Lamda_1.9", "Lamda_2.1", "CRR")
+# Declare column and row names
+dimnames(diff_kr_strike_price_90) = list(as.character(Periods), as.character(lamda))
+dimnames(diff_crr_strike_price_90) = list(as.character(Periods), "CRR_Strike_Price_90")
 
-ggplot(Mapping90)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.1), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
+# Create a data frame that contains diff_crr_strike_price_90 and diff_kr_strike_price_90 and name the columns
+# after the values of λ.
+mapping_strike_price_90 = data.frame(diff_kr_strike_price_90, diff_crr_strike_price_90)
+lamda_labels = c("Lamda_1.1", "Lamda_1.22474", "Lamda_1.5", "Lamda_1.7", "Lamda_1.9", "Lamda_2.1")
 
-ggplot(Mapping90)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.22474), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
+colnames(mapping_strike_price_90) = c(lamda_labels, "CRR_Strike_Price_90")
+mapping_strike_price_90$Periods = Periods
 
-ggplot(Mapping90)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.5), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
+# One plot per λ, CRR always included for comparison
+for (j in seq_along(lamda)) {
+  lam_col = lamda_labels[j]
+  
+  p = ggplot(mapping_strike_price_90) +
+    geom_line(aes(x = Periods, y = .data[[lam_col]], col = "KR")) +
+    geom_line(aes(x = Periods, y = CRR_Strike_Price_90, col = "CRR")) +
+    scale_color_manual(values = c('KR' = 'cornflowerblue', 'CRR' = 'deeppink4')) +
+    labs(color = '') +
+    xlab("Number of Iterations") +
+    ylab("Distance from Black-Scholes value") +
+    theme_classic() +
+    theme(legend.position = "right") 
 
-ggplot(Mapping90)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.7), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
+  print(p)
+  ggsave(filename = paste0("distance_from_bs_strike_price_90_lambda_", lamda[j], ".png"), plot = p, width = 7, height = 5, dpi = 300)
+}
 
-ggplot(Mapping90)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.9), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
 
-ggplot(Mapping90)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_2.1), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
+##################################   Strike Price = 110    #########################################
 
-########################################################################################
-##################################   K = 110    #########################################
-########################################################################################
+# Matrices initialized with zeros, which for every combination of numbers of periods 
+# and λ contain:
 
-Periods = seq(5,100)
-lamda  = seq(1.1,2.1,0.2)
-lamda[2] = 1.22474
-DiffKamRit110 = matrix(0, length(Periods), length(lamda))
-DiffCRR110 = matrix(0, length(Periods), 1)
+# 1. The distance between the binomial model and the "real value"
+diff_crr_strike_price_110 = matrix(0, length(Periods), 1)
 
+# 2. The distance between the trinomial model and the "real value"
+diff_kr_strike_price_110 = matrix(0, length(Periods), length(lamda))
+
+# Black-Scholes/"real" value for Strike Price = 110
+bs_strike_price_110 = BlackScholesEuCall(100,110,1,0.2,0.05)
+
+# Calculate 1 and 2
 for (i in seq(1,length(Periods))) {
-  DiffCRR110[i] = - BinTreeEuCall(100,110,1,Periods[i],0.2,0.05) + BlackScholesEuCall(100,110,1,0.2,0.05)
+  diff_crr_strike_price_110[i] = bs_strike_price_110 - BinTreeEuCall(100,110,1,Periods[i],0.2,0.05)
   for (j in seq(1,length(lamda))) {
-    DiffKamRit110[i,j] = - KammradAmEuCall(100,110,1,Periods[i],lamda[j],0.2,0.05) + BlackScholesEuCall(100,110,1,0.2,0.05)
+    diff_kr_strike_price_110[i,j] = bs_strike_price_110 - KammradAmEuCall(100,110,1,Periods[i],lamda[j],0.2,0.05)
   }
 }
-colnames(DiffKamRit110) <- as.character(lamda)
-rownames(DiffKamRit110) <- as.character(Periods)
-rownames(DiffCRR110) <- as.character(Periods)
-colnames(DiffCRR110) <- "CRR"
 
-Mapping110 = data.frame(DiffKamRit110, DiffCRR110)
-colnames(Mapping110) <- c("Lamda_1.1", "Lamda_1.22474", "Lamda_1.5", "Lamda_1.7", "Lamda_1.9", "Lamda_2.1", "CRR")
+# Declare column and row names
+dimnames(diff_kr_strike_price_110) = list(as.character(Periods), as.character(lamda))
+dimnames(diff_crr_strike_price_110) = list(as.character(Periods), "CRR_Strike_Price_110")
+
+# Create a data frame that contains diff_crr_strike_price_110 and diff_kr_strike_price_110 and name the columns
+# after the values of λ.
+mapping_strike_price_110 = data.frame(diff_kr_strike_price_110, diff_crr_strike_price_110)
+
+colnames(mapping_strike_price_110) = c(lamda_labels, "CRR_Strike_Price_110")
+mapping_strike_price_110$Periods = Periods
+
+# One plot per λ, CRR always included for comparison
+for (j in seq_along(lamda)) {
+  lam_col = lamda_labels[j]
+  
+  p = ggplot(mapping_strike_price_110) +
+    geom_line(aes(x = Periods, y = .data[[lam_col]], col = "KR")) +
+    geom_line(aes(x = Periods, y = CRR_Strike_Price_110, col = "CRR")) +
+    scale_color_manual(values = c('KR' = 'cornflowerblue', 'CRR' = 'deeppink4')) +
+    labs(color = '') +
+    xlab("Number of Iterations") +
+    ylab("Distance from Black-Scholes value") +
+    theme_classic() +
+    theme(legend.position = "right") 
+
+  print(p)
+  ggsave(filename = paste0("distance_from_bs_strike_price_110_lambda_", lamda[j], ".png"), plot = p, width = 7, height = 5, dpi = 300)
+}
 
 
-ggplot(Mapping110)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.1), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
+##################################   Strike Price = 100    #########################################
 
-ggplot(Mapping110)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.22474), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
+# Matrices initialized with zeros, which for every combination of numbers of periods 
+# and λ contain:
 
-ggplot(Mapping110)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.5), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
+# 1. The distance between the binomial model and the "real value"
+diff_crr_strike_price_100 = matrix(0, length(Periods), 1)
 
-ggplot(Mapping110)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.7), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
+# 2. The distance between the trinomial model and the "real value"
+diff_kr_strike_price_100 = matrix(0, length(Periods), length(lamda))
 
-ggplot(Mapping110)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.9), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
+# Black-Scholes/"real" value for Strike Price = 100
+bs_strike_price_100 = BlackScholesEuCall(100,100,1,0.2,0.05)
 
-ggplot(Mapping110)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_2.1), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
-
-########################################################################################
-##################################   K = 100    #########################################
-########################################################################################
-
-Periods = seq(5,100)
-lamda  = seq(1.1,2.1,0.2)
-lamda[2] = 1.22474
-DiffKamRit100 = matrix(0, length(Periods), length(lamda))
-DiffCRR100 = matrix(0, length(Periods), 1)
-
+# Calculate 1 and 2
 for (i in seq(1,length(Periods))) {
-  DiffCRR100[i] = - BinTreeEuCall(100,100,1,Periods[i],0.2,0.05) + BlackScholesEuCall(100,100,1,0.2,0.05)
+  diff_crr_strike_price_100[i] = bs_strike_price_100 - BinTreeEuCall(100,100,1,Periods[i],0.2,0.05)
   for (j in seq(1,length(lamda))) {
-    DiffKamRit100[i,j] = - KammradAmEuCall(100,100,1,Periods[i],lamda[j],0.2,0.05) + BlackScholesEuCall(100,100,1,0.2,0.05)
+    diff_kr_strike_price_100[i,j] = bs_strike_price_100 - KammradAmEuCall(100,100,1,Periods[i],lamda[j],0.2,0.05)
   }
 }
-colnames(DiffKamRit100) <- as.character(lamda)
-rownames(DiffKamRit100) <- as.character(Periods)
-rownames(DiffCRR100) <- as.character(Periods)
-colnames(DiffCRR100) <- "CRR"
 
-Mapping100 = data.frame(DiffKamRit100, DiffCRR100)
-colnames(Mapping100) <- c("Lamda_1.1", "Lamda_1.22474", "Lamda_1.5", "Lamda_1.7", "Lamda_1.9", "Lamda_2.1", "CRR")
+# Declare column and row names
+dimnames(diff_kr_strike_price_100) = list(as.character(Periods), as.character(lamda))
+dimnames(diff_crr_strike_price_100) = list(as.character(Periods), "CRR_Strike_Price_100")
 
+# Create a data frame that contains diff_crr_strike_price_100 and diff_kr_strike_price_100 and name the columns
+# after the values of λ.
+mapping_strike_price_100 = data.frame(diff_kr_strike_price_100, diff_crr_strike_price_100)
 
-ggplot(Mapping100)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.1), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
+colnames(mapping_strike_price_100) = c(lamda_labels, "CRR_Strike_Price_100")
+mapping_strike_price_100$Periods = Periods
 
-ggplot(Mapping100)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.22474), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
+# One plot per λ, CRR always included for comparison
+for (j in seq_along(lamda)) {
+  lam_col = lamda_labels[j]
+  
+  p = ggplot(mapping_strike_price_100) +
+    geom_line(aes(x = Periods, y = .data[[lam_col]], col = "KR")) +
+    geom_line(aes(x = Periods, y = CRR_Strike_Price_100, col = "CRR")) +
+    scale_color_manual(values = c('KR' = 'cornflowerblue', 'CRR' = 'deeppink4')) +
+    labs(color = '') +
+    xlab("Number of Iterations") +
+    ylab("Distance from Black-Scholes value") +
+    theme_classic() +
+    theme(legend.position = "right") 
 
-ggplot(Mapping100)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.5), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
-
-ggplot(Mapping100)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.7), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
-
-ggplot(Mapping100)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_1.9), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
-
-ggplot(Mapping100)+
-  geom_line(mapping = aes(x = Periods, y = Lamda_2.1), col ='deeppink4')+
-  geom_line(mapping = aes(x = Periods, y = CRR), col ='cornflowerblue')+
-  xlab("Number of Iterations")+
-  ylab("Distance from Black-Scholes")+
-  theme_classic()
-
-#################### Odd and Even Steps for CRR ############################################
-
-Periods = seq(5,100)
-
-i = which(Periods %% 2 == 0, arr.ind = T)
-j = which(Periods %% 2 == 1, arr.ind = T)
-
-EvenPeriods = Periods[i]
-DiffCRREvens90 = matrix(1, length(EvenPeriods))
-DiffCRREvens100 = matrix(1, length(EvenPeriods))
-DiffCRREvens110 = matrix(1, length(EvenPeriods))
-
-OddPeriods = Periods[j]
-DiffCRROdds90 = matrix(1, length(OddPeriods))
-DiffCRROdds100 = matrix(1, length(OddPeriods))
-DiffCRROdds110 = matrix(1, length(OddPeriods))
-
-                             # AT THE MONEY
-
-for(k in seq(1,length(EvenPeriods))){
-  DiffCRREvens100[k] = - BinTreeEuCall(100,100,1,EvenPeriods[k],0.2,0.05) + BlackScholesEuCall(100,100,1,0.2,0.05)
+  print(p)
+  ggsave(filename = paste0("distance_from_bs_strike_price_100_lambda_", lamda[j], ".png"), plot = p, width = 7, height = 5, dpi = 300)
 }
-rownames(DiffCRREvens100) <- as.character(EvenPeriods)
 
-for (n in seq(1,length(OddPeriods))) {
-  DiffCRROdds100[n] = - BinTreeEuCall(100,100,1,OddPeriods[n],0.2,0.05) + BlackScholesEuCall(100,100,1,0.2,0.05)
+
+############################ Odd-Even Steps ##############################################
+
+# In this subsection we are going to study the odd-even steps of the CRR model
+
+# Extract the even steps
+even_steps = Periods[Periods %% 2 == 0]
+# Extract the odd steps
+odd_steps  = Periods[Periods %% 2 == 1]
+
+# Assign the values for the cases: 1. ATM, 2. ITM and 3. OTM
+values = c(ATM = 100, ITM = 90, OTM = 110)
+# Assign the titles for the cases: 1. ATM, 2. ITM and 3. OTM
+titles  = c(ATM = "Even-Odd Steps European Call (ATM)",
+            ITM = "Even-Odd Steps European Call (ITM)",
+            OTM = "Even-Odd Steps European Call (OTM)")
+
+# Create an empty list
+all_kinds_of_steps = list()
+
+for (nm in names(values)) {
+  # Strike price
+  strike_price_even_odd_steps = values[[nm]]
+  
+  # Black-Scholes formula for every strike price
+  bs_odd_even_steps = BlackScholesEuCall(100, strike_price_even_odd_steps, 1, 0.2, 0.05)
+
+  # Difference of the CRR from the "real" value for even steps
+  diff_crr_even_steps = sapply(even_steps, function(n) bs_odd_even_steps - BinTreeEuCall(100, strike_price_even_odd_steps, 1, n, 0.2, 0.05))
+  names(diff_crr_even_steps) = as.character(even_steps)
+  
+  # Difference of the CRR from the "real" value for odd steps
+  diff_crr_odd_steps = sapply(odd_steps, function(n) bs_odd_even_steps - BinTreeEuCall(100, strike_price_even_odd_steps, 1, n, 0.2, 0.05))
+  names(diff_crr_odd_steps) = as.character(odd_steps)
+  
+  # All steps together
+  diff_crr_all_steps = sapply(Periods, function(n) bs_odd_even_steps - BinTreeEuCall(100, strike_price_even_odd_steps, 1, n, 0.2, 0.05))
+  names(diff_crr_all_steps) = as.character(Periods)
+
+  # Save the above quantities in a list
+  all_kinds_of_steps[[nm]] = list(evens = diff_crr_even_steps, odds = diff_crr_odd_steps, all = diff_crr_all_steps)
+  
+  # Plot the results
+  p = ggplot() +
+    geom_line(aes(even_steps, diff_crr_even_steps), col = "cornflowerblue") +
+    geom_line(aes(odd_steps, diff_crr_odd_steps), col = "deeppink4") +
+    geom_line(aes(Periods, diff_crr_all_steps), col = "darkolivegreen4") +
+    xlab("Number of Iterations") +
+    ylab("Distance from Black-Scholes value") +
+    theme_classic() +
+    ggtitle(titles[[nm]])
+  
+  print(p)
+  ggsave(paste0("distance_form_bs_crr_even-odd_steps_", nm, ".png"), plot = p, width = 7, height = 5, dpi = 300)
 }
-rownames(DiffCRROdds100) <- as.character(OddPeriods)
 
-ggplot()+
-  geom_line(aes(EvenPeriods,DiffCRREvens100), col = "cornflowerblue")+
-  geom_line(aes(OddPeriods,DiffCRROdds100), col = "deeppink4")+
-  geom_line(aes(Periods,DiffCRR100), col = "darkolivegreen4")+
-  xlab("Number of Iterations")+
-  ylab("Distance of Black-Scholes")+
-  theme_classic()
+#########################################################################################
+#########################################################################################
+
+# In this section we are going to study the behaviour of the models idicatively
+# for different values of the volatility factor (σ):
+
+volatility = seq(0.01, 0.5, 0.01)
+
+# We change the number of periods the lattice models should run, while this time we
+# fix the parameter λ for simplicity reasons. 
+# Furthermore we fix the values:
+# ===============================================================
+# S0 = 100
+# strike_price = 100 (ATM)
+# T = 1
+# r = 0.05                            
+# ===============================================================
 
 
-                                # IN THE MONEY
+################################### Volatility ##################################
 
-for(k in seq(1,length(EvenPeriods))){
-  DiffCRREvens90[k] = - BinTreeEuCall(100,90,1,EvenPeriods[k],0.2,0.05) + BlackScholesEuCall(100,90,1,0.2,0.05)
+# Matrices initialized with zeros, which for every combination of numbers of periods 
+# and strike price (Black-Scholes has no periods) contain the values of:
+
+# 1. Black-Scholes formula
+bs_volatility = matrix(0, 1, length(volatility))
+
+# 2. Cox-Ross-Rubinstein binomial model
+crr_volatility = matrix(0, length(Periods), length(volatility))
+
+# 3. Kamrad-Ritcken trinomial model
+kr_volatility = matrix(0, length(Periods), length(volatility))
+
+# 4. The distance between the binomial model and the "real value"
+diff_crr_volatility = matrix(0, length(Periods), length(volatility))
+
+# 5. The distance between the trinomial model and the "real value"
+diff_kr_volatility = matrix(0, length(Periods), length(volatility))
+
+# Calculate 1
+for (j in seq(1,length(volatility))) {
+  bs_volatility[j] = BlackScholesEuCall(100,100,1,volatility[j],0.05)
 }
-rownames(DiffCRREvens90) <- as.character(EvenPeriods)
 
-for (n in seq(1,length(OddPeriods))) {
-  DiffCRROdds90[n] = - BinTreeEuCall(100,90,1,OddPeriods[n],0.2,0.05) + BlackScholesEuCall(100,90,1,0.2,0.05)
+# Calculate 2-5
+for (i in seq(1,length(Periods))) {
+  for (j in seq(1,length(volatility))) {
+    crr_volatility[i,j] = BinTreeEuCall(100,100,1,Periods[i],volatility[j],0.05)
+    kr_volatility[i,j] = KammradAmEuCall(100,100,1,Periods[i],1.22474,volatility[j],0.05)
+    diff_crr_volatility[i,j] = bs_volatility[j] - BinTreeEuCall(100,100,1,Periods[i],volatility[j],0.05)
+    diff_kr_volatility[i,j] = bs_volatility[j] - KammradAmEuCall(100,100,1,Periods[i],1.22474,volatility[j],0.05)
+  }
 }
-rownames(DiffCRROdds90) <- as.character(OddPeriods)
 
-ggplot()+
-  geom_line(aes(EvenPeriods,DiffCRREvens90), col = "cornflowerblue")+
-  geom_line(aes(OddPeriods,DiffCRROdds90), col = "deeppink4")+
-  geom_line(aes(Periods,DiffCRR90), col = "darkolivegreen4")+
-  xlab("Number of Iterations")+
-  ylab("Distance of Black-Scholes")+
-  theme_classic()+
-  ggtitle("Even-Odd Steps European Call (ITM)")
+named = set_dimnames(list(CRRVolatility = crr_volatility, KRVolatility = kr_volatility, DiffCRRVolatility = diff_crr_volatility, DiffKRVolatility = diff_kr_volatility),
+                       rownames_val = Periods, colnames_val = volatility)
+crr_volatility = named$CRRVolatility; kr_volatility = named$KRVolatility; diff_crr_volatility = named$DiffCRRVolatility; diff_kr_volatility = named$DiffKRVolatility
 
+# bs_volatility has no Periods dimension, so it's separate
+colnames(bs_volatility) = as.character(volatility)   
+# ==================================================================================================
 
-                                 # OUT THE MONEY
+# Save the values of the quantities we calculated previously in a .xlsx file, which contains
+# five different sheets that correspond to each matrix.
+data_list = list(CRR_Volatility = crr_volatility, KR_Volatility = kr_volatility, BS_Volatility = bs_volatility, Diff_CRR_Volatility = diff_crr_volatility, Diff_KR_Volatility = diff_kr_volatility)
 
-for(k in seq(1,length(EvenPeriods))){
-  DiffCRREvens110[k] = - BinTreeEuCall(100,110,1,EvenPeriods[k],0.2,0.05) + BlackScholesEuCall(100,110,1,0.2,0.05)
-}
-rownames(DiffCRREvens110) <- as.character(EvenPeriods)
+write.xlsx(data_list, "results_volatility.xlsx", colNames = TRUE, rowNames = TRUE)
 
-for (n in seq(1,length(OddPeriods))) {
-  DiffCRROdds110[n] = - BinTreeEuCall(100,110,1,OddPeriods[n],0.2,0.05) + BlackScholesEuCall(100,110,1,0.2,0.05)
-}
-rownames(DiffCRROdds110) <- as.character(OddPeriods)
+# Data frame with distances of both tree-based models from Black-Scholes,
+# at the maximum period count, across strike prices
+mapping_volatility <- data.frame(
+  Volatility = volatility,
+  Diff_CRR_Volatility = diff_crr_volatility[nrow(diff_crr_volatility), ],
+  Diff_KR_Volatility = diff_kr_volatility[nrow(diff_kr_volatility), ]
+)
 
-ggplot()+
-  geom_line(aes(EvenPeriods,DiffCRREvens110), col = "cornflowerblue")+
-  geom_line(aes(OddPeriods,DiffCRROdds110), col = "deeppink4")+
-  geom_line(aes(Periods,DiffCRR110), col = "darkolivegreen4")+
-  xlab("Number of Iterations")+
-  ylab("Distance of Black-Scholes")+
-  theme_classic()+
-  ggtitle("Even-Odd Steps European Call (OTM)")
+p <- ggplot(mapping_volatility) +
+  geom_line(aes(x = Volatility, y = Diff_KR_Volatility, col = "KR")) +
+  geom_line(aes(x = Volatility, y = Diff_CRR_Volatility, col = "CRR")) +
+  scale_color_manual(values = c('KR' = 'cornflowerblue', 'CRR' = 'deeppink4')) +
+  labs(color = '') +
+  xlab("Volatility") +
+  ylab("Distance from Black-Scholes value") +
+  theme_classic() +
+  theme(legend.position = "right")
 
-
+print(p)
+ggsave("distance_from_bs_volatility.png", plot = p, width = 7, height = 5, dpi = 300)
 
 
 #########################################################################################
-############################## Sensitivity Analysis (At The Money) ######################
 #########################################################################################
 
+# In this section we are going to study the behaviour of the models idicatively
+# for different values of the risk free rate:
 
-################################### volatility (sigma) ##################################
+risk_free_rate = seq(0, 0.15, 0.01)
 
-Periods = seq(5,100)
-sigma  = c(0.15, 0.18, 0.24)
-DiffKamRitsigma = matrix(0, length(Periods), length(sigma))
-KamRitsigma = matrix(0, length(Periods), length(sigma))
-DiffCRRsigma = matrix(0, length(Periods), length(sigma))
-CRRsigma = matrix(0, length(Periods), length(sigma))
-BSsigma = matrix(0, 1, length(sigma))
+# We change the number of periods the lattice models should run, while this time we
+# fix the parameter λ for simplicity reasons. 
+# Furthermore we fix the values:
+# ===============================================================
+# S0 = 100
+# strike_price = 100 (ATM)
+# T = 1
+# volatility = 0.2                         
+# ===============================================================
 
 
+################################### Risk Free Rate ##################################
+
+# Matrices initialized with zeros, which for every combination of numbers of periods 
+# and strike price (Black-Scholes has no periods) contain the values of:
+
+# 1. Black-Scholes formula
+bs_risk_free_rate = matrix(0, 1, length(risk_free_rate))
+
+# 2. Cox-Ross-Rubinstein binomial model
+crr_risk_free_rate = matrix(0, length(Periods), length(risk_free_rate))
+
+# 3. Kamrad-Ritcken trinomial model
+kr_risk_free_rate = matrix(0, length(Periods), length(risk_free_rate))
+
+# 4. The distance between the binomial model and the "real value"
+diff_crr_risk_free_rate = matrix(0, length(Periods), length(risk_free_rate))
+
+# 5. The distance between the trinomial model and the "real value"
+diff_kr_risk_free_rate = matrix(0, length(Periods), length(risk_free_rate))
+
+# Calculate 1
+for (j in seq(1,length(risk_free_rate))) {
+  bs_risk_free_rate[j] = BlackScholesEuCall(100,100,1,0.2,risk_free_rate[j])
+}
+
+# Calculate 2-5
 for (i in seq(1,length(Periods))) {
-  for (j in seq(1,length(sigma))) {
-    CRRsigma[i,j] = BinTreeEuCall(100,100,1,Periods[i],sigma[j],0.05)
-    KamRitsigma[i,j] = KammradAmEuCall(100,100,1,Periods[i],1.22474,sigma[j],0.05)
-    BSsigma[j] = BlackScholesEuCall(100,100,1,sigma[j],0.05)
-    DiffCRRsigma[i,j] = - BinTreeEuCall(100,100,1,Periods[i],sigma[j],0.05) + BlackScholesEuCall(100,100,1,sigma[j],0.05)
-    DiffKamRitsigma[i,j] =  - KammradAmEuCall(100,100,1,Periods[i],1.22474,sigma[j],0.05) + BlackScholesEuCall(100,100,1,sigma[j],0.05)
+  for (j in seq(1,length(risk_free_rate))) {
+    crr_risk_free_rate[i,j] = BinTreeEuCall(100,100,1,Periods[i],0.2,risk_free_rate[j])
+    kr_risk_free_rate[i,j] = KammradAmEuCall(100,100,1,Periods[i],1.22474,0.2,risk_free_rate[j])
+    diff_crr_risk_free_rate[i,j] = bs_risk_free_rate[j] - BinTreeEuCall(100,100,1,Periods[i],0.2,risk_free_rate[j])
+    diff_kr_risk_free_rate[i,j] = bs_risk_free_rate[j] - KammradAmEuCall(100,100,1,Periods[i],1.22474,0.2,risk_free_rate[j])
   }
 }
 
-colnames(CRRsigma) <- as.character(sigma)
-rownames(CRRsigma) <- as.character(Periods)
+named = set_dimnames(list(CRRRiskFreeRate = crr_risk_free_rate, KRRiskFreeRate = kr_risk_free_rate, DiffCRRRiskFreeRate = diff_crr_risk_free_rate, DiffKRRiskFreeRate = diff_kr_risk_free_rate),
+                       rownames_val = Periods, colnames_val = risk_free_rate)
+crr_risk_free_rate = named$CRRRiskFreeRate; kr_risk_free_rate = named$KRRiskFreeRate; diff_crr_risk_free_rate = named$DiffCRRRiskFreeRate; diff_kr_risk_free_rate = named$DiffKRRiskFreeRate
 
-colnames(KamRitsigma) <- as.character(sigma)
-rownames(KamRitsigma) <- as.character(Periods)
+# bs_risk_free_rate has no Periods dimension, so it's separate
+colnames(bs_risk_free_rate) = as.character(risk_free_rate)   
+# ==================================================================================================
 
-colnames(BSsigma) <- as.character(sigma)
+# Save the values of the quantities we calculated previously in a .xlsx file, which contains
+# five different sheets that correspond to each matrix.
+data_list = list(CRR_Risk_Free_Rate = crr_risk_free_rate, KR_Risk_Free_Rate = kr_risk_free_rate, BS_Risk_Free_Rate = bs_risk_free_rate, Diff_CRR_Risk_Free_Rate = diff_crr_risk_free_rate, Diff_KR_Risk_Free_Rate = diff_kr_risk_free_rate)
 
-colnames(DiffCRRsigma) <- as.character(sigma)
-rownames(DiffCRRsigma) <- as.character(Periods)
+write.xlsx(data_list, "results_risk_free_rate.xlsx", colNames = TRUE, rowNames = TRUE)
 
-colnames(DiffKamRitsigma) <- as.character(sigma)
-rownames(DiffKamRitsigma) <- as.character(Periods)
+# Data frame with distances of both tree-based models from Black-Scholes,
+# at the maximum period count, across strike prices
+mapping_risk_free_rate <- data.frame(
+  Risk_Free_Rate = risk_free_rate,
+  Diff_CRR_Risk_Free_Rate = diff_crr_risk_free_rate[nrow(diff_crr_risk_free_rate), ],
+  Diff_KR_Risk_Free_Rate = diff_kr_risk_free_rate[nrow(diff_kr_risk_free_rate), ]
+)
 
-#write.xlsx(CRRsigma, "CRRsigma.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(KamRitsigma, "KamRitsigma.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(BSsigma, "BSsigma.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(DiffCRRsigma, "DiffCRRsigma.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(DiffKamRitsigma, "DiffKamRitsigma.xlsx", colNames = TRUE, rowNames = TRUE)
-
-
-######################### PLOTS (Volatility) ####################################
-
-Sigma = seq(0.01, 0.5, 0.01)
-DiffCRR_sigma = matrix(0, 1, length(Sigma))
-DiffKamRit_sigma = matrix(0, 1, length(Sigma))
-
-for (k in seq(1,length(Sigma))) {
-  DiffCRR_sigma[k] = - BinTreeEuCall(100,100,1,80,Sigma[k],0.05) + BlackScholesEuCall(100,100,1,Sigma[k],0.05)
-  DiffKamRit_sigma[k] = - KammradAmEuCall(100,100,1,80,1.22474,Sigma[k],0.05) + BlackScholesEuCall(100,100,1,Sigma[k],0.05)
-}
-
-colnames(DiffCRR_sigma) = as.character(Sigma)
-colnames(DiffKamRit_sigma) = as.character(Sigma)
-
-Mapping_sigma = data.frame(t(DiffCRR_sigma), t(DiffKamRit_sigma))
-colnames(Mapping_sigma) = c("CRR", "KR")
-
-ggplot(Mapping_sigma)+
-  geom_line(mapping = aes(Sigma, KR, color = 'KR'))+
-  geom_line(mapping = aes(Sigma, CRR, color = 'CRR'))+
+p <- ggplot(mapping_risk_free_rate) +
+  geom_line(aes(x = Risk_Free_Rate, y = Diff_KR_Risk_Free_Rate, col = "KR")) +
+  geom_line(aes(x = Risk_Free_Rate, y = Diff_CRR_Risk_Free_Rate, col = "CRR")) +
   scale_color_manual(values = c('KR' = 'cornflowerblue', 'CRR' = 'deeppink4')) +
-  labs(color = '')+
-  xlab("Volatility")+
-  ylab("Distance of Black-Scholes")+
-  theme_classic()+
-  theme(legend.position = "right")+
-  ggtitle("Volatility Analysis European Call")
+  labs(color = '') +
+  xlab("Risk free rate") +
+  ylab("Distance from Black-Scholes value") +
+  theme_classic() +
+  theme(legend.position = "right")
 
-
-################################### risk free rate (r) ##################################
-
-Periods = seq(5,100)
-riskfree = c(0.01, 0.04, 0.07)
-DiffKamRitrf = matrix(0, length(Periods), length(sigma))
-KamRitrf = matrix(0, length(Periods), length(sigma))
-DiffCRRrf = matrix(0, length(Periods), length(sigma))
-CRRrf = matrix(0, length(Periods), length(sigma))
-BSrf = matrix(0, 1, length(sigma))
-
-
-for (i in seq(1,length(Periods))) {
-  for (j in seq(1,length(riskfree))) {
-    CRRrf[i,j] = BinTreeEuCall(100,100,1,Periods[i],0.2,riskfree[j])
-    KamRitrf[i,j] = KammradAmEuCall(100,100,1,Periods[i],1.22474,0.2,riskfree[j])
-    BSrf[j] = BlackScholesEuCall(100,100,1,0.2,riskfree[j])
-    DiffCRRrf[i,j] = - BinTreeEuCall(100,100,1,Periods[i],0.2,riskfree[j]) + BlackScholesEuCall(100,100,1,0.2,riskfree[j])
-    DiffKamRitrf[i,j] = - KammradAmEuCall(100,100,1,Periods[i],1.22474,0.2,riskfree[j]) + BlackScholesEuCall(100,100,1,0.2,riskfree[j])
-  }
-}
-
-colnames(CRRrf) <- as.character(riskfree)
-rownames(CRRrf) <- as.character(Periods)
-
-colnames(KamRitrf) <- as.character(riskfree)
-rownames(KamRitrf) <- as.character(Periods)
-
-colnames(BSrf) <- as.character(riskfree)
-
-colnames(DiffCRRrf) <- as.character(riskfree)
-rownames(DiffCRRrf) <- as.character(Periods)
-
-colnames(DiffKamRitrf) <- as.character(riskfree)
-rownames(DiffKamRitrf) <- as.character(Periods)
-
-#write.xlsx(CRRrf, "CRRrf.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(KamRitrf, "KamRitrf.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(BSrf, "BSrf.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(DiffCRRrf, "DiffCRRrf.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(DiffKamRitrf, "DiffKamRitrf.xlsx", colNames = TRUE, rowNames = TRUE)
-
-######################### PLOTS (risk free) ####################################
-
-risk_free = seq(0, 0.15, 0.01)
-DiffCRR_rf = matrix(0, 1, length(risk_free))
-DiffKamRit_rf = matrix(0, 1, length(risk_free))
-
-for (k in seq(1,length(risk_free))) {
-  DiffCRR_rf[k] = - BinTreeEuCall(100,100,1,80,0.2,risk_free[k]) + BlackScholesEuCall(100,100,1,0.2,risk_free[k])
-  DiffKamRit_rf[k] = - KammradAmEuCall(100,100,1,80,1.22474,0.2,risk_free[k]) + BlackScholesEuCall(100,100,1,0.2,risk_free[k])
-}
-
-colnames(DiffCRR_rf) = as.character(risk_free)
-colnames(DiffKamRit_rf) = as.character(risk_free)
-
-Mapping_rf = data.frame(t(DiffCRR_rf), t(DiffKamRit_rf))
-colnames(Mapping_rf) = c("CRR", "KR")
-
-ggplot(Mapping_rf)+
-  geom_line(mapping = aes(risk_free, KR, color = 'KR'))+
-  geom_line(mapping = aes(risk_free, CRR, color = 'CRR'))+
-  scale_color_manual(values = c('KR' = 'cornflowerblue', 'CRR' = 'deeppink4')) +
-  labs(color = '')+
-  xlab("Risk Free")+
-  ylab("Distance of Black-Scholes")+
-  theme_classic()+
-  theme(legend.position = "right")+
-  ggtitle("Risk Free Analysis European Call")
+print(p)
+ggsave("distance_from_bs_risk_free_rate.png", plot = p, width = 7, height = 5, dpi = 300)
 
 
 ################################### Time (T) ##################################
@@ -511,19 +574,19 @@ for (i in seq(1,length(Periods))) {
   }
 }
 
-colnames(CRRtime) <- as.character(time)
-rownames(CRRtime) <- as.character(Periods)
+colnames(CRRtime) = as.character(time)
+rownames(CRRtime) = as.character(Periods)
 
-colnames(KamRittime) <- as.character(time)
-rownames(KamRittime) <- as.character(Periods)
+colnames(KamRittime) = as.character(time)
+rownames(KamRittime) = as.character(Periods)
 
-colnames(BStime) <- as.character(time)
+colnames(BStime) = as.character(time)
 
-colnames(DiffCRRtime) <- as.character(time)
-rownames(DiffCRRtime) <- as.character(Periods)
+colnames(DiffCRRtime) = as.character(time)
+rownames(DiffCRRtime) = as.character(Periods)
 
-colnames(DiffKamRittime) <- as.character(time)
-rownames(DiffKamRittime) <- as.character(Periods)
+colnames(DiffKamRittime) = as.character(time)
+rownames(DiffKamRittime) = as.character(Periods)
 
 #write.xlsx(CRRtime, "CRRtime.xlsx", colNames = TRUE, rowNames = TRUE)
 #write.xlsx(KamRittime, "KamRittime.xlsx", colNames = TRUE, rowNames = TRUE)
