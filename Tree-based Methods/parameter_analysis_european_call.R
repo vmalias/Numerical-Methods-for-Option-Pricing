@@ -9,7 +9,6 @@
 
 # Loaded libraries
 library(ggplot2)
-# library(tibble)
 library(openxlsx)
 
 # Common Parameters of the Black-Scholes formula, the Cox-Ross-Rubinstein 
@@ -114,7 +113,7 @@ colnames(bs_strike_price) = as.character(strike_price)
 # five different sheets that correspond to each matrix.
 data_list = list(CRR_Strike_Price = crr_strike_price, KR_Strike_Price = kr_strike_price, BS_Strike_Price = bs_strike_price, Diff_CRR_Strike_Price = diff_crr_strike_price, Diff_KR_Strike_Price = diff_kr_strike_price)
 
-write.xlsx(data_list, "results_strike_price.xlsx", colNames = TRUE, rowNames = TRUE)
+write.xlsx(data_list, "results_strike_price_european_call.xlsx", colNames = TRUE, rowNames = TRUE)
 
 
 # Data frame with distances of both tree-based models from Black-Scholes,
@@ -136,7 +135,7 @@ p <- ggplot(mapping_strike_price) +
   theme(legend.position = "right")
 
 print(p)
-ggsave("distance_from_bs_strike_price.png", plot = p, width = 7, height = 5, dpi = 300)
+ggsave("distance_from_bs_strike_price_european_call.png", plot = p, width = 7, height = 5, dpi = 300)
 
 
 
@@ -210,7 +209,7 @@ for (j in seq_along(lamda)) {
     theme(legend.position = "right") 
 
   print(p)
-  ggsave(filename = paste0("distance_from_bs_strike_price_90_lambda_", lamda[j], ".png"), plot = p, width = 7, height = 5, dpi = 300)
+  ggsave(filename = paste0("distance_from_bs_strike_price_90_lambda_", lamda[j], "_european_call.png"), plot = p, width = 7, height = 5, dpi = 300)
 }
 
 
@@ -262,7 +261,7 @@ for (j in seq_along(lamda)) {
     theme(legend.position = "right") 
 
   print(p)
-  ggsave(filename = paste0("distance_from_bs_strike_price_110_lambda_", lamda[j], ".png"), plot = p, width = 7, height = 5, dpi = 300)
+  ggsave(filename = paste0("distance_from_bs_strike_price_110_lambda_", lamda[j], "_european_call.png"), plot = p, width = 7, height = 5, dpi = 300)
 }
 
 
@@ -314,7 +313,7 @@ for (j in seq_along(lamda)) {
     theme(legend.position = "right") 
 
   print(p)
-  ggsave(filename = paste0("distance_from_bs_strike_price_100_lambda_", lamda[j], ".png"), plot = p, width = 7, height = 5, dpi = 300)
+  ggsave(filename = paste0("distance_from_bs_strike_price_100_lambda_", lamda[j], "_european_call.png"), plot = p, width = 7, height = 5, dpi = 300)
 }
 
 
@@ -370,7 +369,7 @@ for (nm in names(values)) {
     ggtitle(titles[[nm]])
   
   print(p)
-  ggsave(paste0("distance_form_bs_crr_even-odd_steps_", nm, ".png"), plot = p, width = 7, height = 5, dpi = 300)
+  ggsave(paste0("distance_form_bs_crr_even-odd_steps_", nm, "_european_call.png"), plot = p, width = 7, height = 5, dpi = 300)
 }
 
 #########################################################################################
@@ -439,7 +438,7 @@ colnames(bs_volatility) = as.character(volatility)
 # five different sheets that correspond to each matrix.
 data_list = list(CRR_Volatility = crr_volatility, KR_Volatility = kr_volatility, BS_Volatility = bs_volatility, Diff_CRR_Volatility = diff_crr_volatility, Diff_KR_Volatility = diff_kr_volatility)
 
-write.xlsx(data_list, "results_volatility.xlsx", colNames = TRUE, rowNames = TRUE)
+write.xlsx(data_list, "results_volatility_european_call.xlsx", colNames = TRUE, rowNames = TRUE)
 
 # Data frame with distances of both tree-based models from Black-Scholes,
 # at the maximum period count, across strike prices
@@ -460,7 +459,7 @@ p <- ggplot(mapping_volatility) +
   theme(legend.position = "right")
 
 print(p)
-ggsave("distance_from_bs_volatility.png", plot = p, width = 7, height = 5, dpi = 300)
+ggsave("distance_from_bs_volatility_european_call.png", plot = p, width = 7, height = 5, dpi = 300)
 
 
 #########################################################################################
@@ -529,7 +528,7 @@ colnames(bs_risk_free_rate) = as.character(risk_free_rate)
 # five different sheets that correspond to each matrix.
 data_list = list(CRR_Risk_Free_Rate = crr_risk_free_rate, KR_Risk_Free_Rate = kr_risk_free_rate, BS_Risk_Free_Rate = bs_risk_free_rate, Diff_CRR_Risk_Free_Rate = diff_crr_risk_free_rate, Diff_KR_Risk_Free_Rate = diff_kr_risk_free_rate)
 
-write.xlsx(data_list, "results_risk_free_rate.xlsx", colNames = TRUE, rowNames = TRUE)
+write.xlsx(data_list, "results_risk_free_rate_european_call.xlsx", colNames = TRUE, rowNames = TRUE)
 
 # Data frame with distances of both tree-based models from Black-Scholes,
 # at the maximum period count, across strike prices
@@ -550,7 +549,7 @@ p <- ggplot(mapping_risk_free_rate) +
   theme(legend.position = "right")
 
 print(p)
-ggsave("distance_from_bs_risk_free_rate.png", plot = p, width = 7, height = 5, dpi = 300)
+ggsave("distance_from_bs_risk_free_rate_european_call.png", plot = p, width = 7, height = 5, dpi = 300)
 
 
 #########################################################################################
@@ -619,7 +618,7 @@ colnames(bs_maturity) = as.character(maturity)
 # five different sheets that correspond to each matrix.
 data_list = list(CRR_Maturity = crr_maturity, KR_Maturity = kr_maturity, BS_Maturity = bs_maturity, Diff_CRR_Maturity = diff_crr_maturity, Diff_KR_Maturity = diff_kr_maturity)
 
-write.xlsx(data_list, "results_maturity.xlsx", colNames = TRUE, rowNames = TRUE)
+write.xlsx(data_list, "results_maturity_european_call.xlsx", colNames = TRUE, rowNames = TRUE)
 
 # Data frame with distances of both tree-based models from Black-Scholes,
 # at the maximum period count, across strike prices
@@ -640,4 +639,4 @@ p <- ggplot(mapping_maturity) +
   theme(legend.position = "right")
 
 print(p)
-ggsave("distance_from_bs_maturity.png", plot = p, width = 7, height = 5, dpi = 300)
+ggsave("distance_from_bs_maturity_european_call.png", plot = p, width = 7, height = 5, dpi = 300)

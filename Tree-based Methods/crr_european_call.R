@@ -31,4 +31,4 @@ for (j in 0:i){
 return(tree[1,1])
 }
 
-BinTreeEuCall(100,100,1,20,0.2,0.05)
+BinTreeEuCall(100,100,1,80,0.2,0.05)
