@@ -7,9 +7,14 @@
 # we assign the other parameters an indicative value whithin a reasonable range e.g. risk free 
 # rate is difficult to reach the level of 20%.
 
-# Loaded libraries
+# Load libraries
 library(ggplot2)
 library(openxlsx)
+
+# Load the functions we are going to use
+source("black_scholes_european_call.R")
+source("cox_ross_rubinstein_european_call.R")
+source("kamrad_ritchken_european_call.R")
 
 # Common Parameters of the Black-Scholes formula, the Cox-Ross-Rubinstein 
 # binomial model and the Kamrad-Ritchken trinomial model. 
@@ -77,16 +82,16 @@ diff_kr_strike_price = matrix(0, length(Periods), length(strike_price))
 
 # Calculate 1
 for (j in seq(1,length(strike_price))) {
-  bs_strike_price[j] = BlackScholesEuCall(100,strike_price[j],1,0.2,0.05)
+  bs_strike_price[j] = bs_european_call(100,strike_price[j],1,0.2,0.05)
 }
 
 # Calculate 2-5
 for (i in seq(1,length(Periods))) {
   for (j in seq(1,length(strike_price))) {
-    crr_strike_price[i,j] = BinTreeEuCall(100,strike_price[j],1,Periods[i],0.2,0.05)
-    kr_strike_price[i,j] = KammradAmEuCall(100,strike_price[j],1,Periods[i],1.22474,0.2,0.05)
-    diff_crr_strike_price[i,j] = bs_strike_price[j] - BinTreeEuCall(100,strike_price[j],1,Periods[i],0.2,0.05)
-    diff_kr_strike_price[i,j] = bs_strike_price[j] - KammradAmEuCall(100,strike_price[j],1,Periods[i],1.22474,0.2,0.05)
+    crr_strike_price[i,j] = crr_european_call(100,strike_price[j],1,Periods[i],0.2,0.05)
+    kr_strike_price[i,j] = kr_european_call(100,strike_price[j],1,Periods[i],1.22474,0.2,0.05)
+    diff_crr_strike_price[i,j] = bs_strike_price[j] - crr_european_call(100,strike_price[j],1,Periods[i],0.2,0.05)
+    diff_kr_strike_price[i,j] = bs_strike_price[j] - kr_european_call(100,strike_price[j],1,Periods[i],1.22474,0.2,0.05)
   }
 }
 
@@ -172,13 +177,13 @@ diff_crr_strike_price_90 = matrix(0, length(Periods), 1)
 diff_kr_strike_price_90 = matrix(0, length(Periods), length(lamda))
 
 # Black-Scholes/"real" value for Strike Price = 90
-bs_strike_price_90 = BlackScholesEuCall(100,90,1,0.2,0.05)
+bs_strike_price_90 = bs_european_call(100,90,1,0.2,0.05)
 
 # Calculate 1 and 2
 for (i in seq(1,length(Periods))) {
-  diff_crr_strike_price_90[i] = bs_strike_price_90 - BinTreeEuCall(100,90,1,Periods[i],0.2,0.05)
+  diff_crr_strike_price_90[i] = bs_strike_price_90 - crr_european_call(100,90,1,Periods[i],0.2,0.05)
   for (j in seq(1,length(lamda))) {
-    diff_kr_strike_price_90[i,j] = bs_strike_price_90 - KammradAmEuCall(100,90,1,Periods[i],lamda[j],0.2,0.05)
+    diff_kr_strike_price_90[i,j] = bs_strike_price_90 - kr_european_call(100,90,1,Periods[i],lamda[j],0.2,0.05)
   }
 }
 
@@ -225,13 +230,13 @@ diff_crr_strike_price_110 = matrix(0, length(Periods), 1)
 diff_kr_strike_price_110 = matrix(0, length(Periods), length(lamda))
 
 # Black-Scholes/"real" value for Strike Price = 110
-bs_strike_price_110 = BlackScholesEuCall(100,110,1,0.2,0.05)
+bs_strike_price_110 = bs_european_call(100,110,1,0.2,0.05)
 
 # Calculate 1 and 2
 for (i in seq(1,length(Periods))) {
-  diff_crr_strike_price_110[i] = bs_strike_price_110 - BinTreeEuCall(100,110,1,Periods[i],0.2,0.05)
+  diff_crr_strike_price_110[i] = bs_strike_price_110 - crr_european_call(100,110,1,Periods[i],0.2,0.05)
   for (j in seq(1,length(lamda))) {
-    diff_kr_strike_price_110[i,j] = bs_strike_price_110 - KammradAmEuCall(100,110,1,Periods[i],lamda[j],0.2,0.05)
+    diff_kr_strike_price_110[i,j] = bs_strike_price_110 - kr_european_call(100,110,1,Periods[i],lamda[j],0.2,0.05)
   }
 }
 
@@ -277,13 +282,13 @@ diff_crr_strike_price_100 = matrix(0, length(Periods), 1)
 diff_kr_strike_price_100 = matrix(0, length(Periods), length(lamda))
 
 # Black-Scholes/"real" value for Strike Price = 100
-bs_strike_price_100 = BlackScholesEuCall(100,100,1,0.2,0.05)
+bs_strike_price_100 = bs_european_call(100,100,1,0.2,0.05)
 
 # Calculate 1 and 2
 for (i in seq(1,length(Periods))) {
-  diff_crr_strike_price_100[i] = bs_strike_price_100 - BinTreeEuCall(100,100,1,Periods[i],0.2,0.05)
+  diff_crr_strike_price_100[i] = bs_strike_price_100 - crr_european_call(100,100,1,Periods[i],0.2,0.05)
   for (j in seq(1,length(lamda))) {
-    diff_kr_strike_price_100[i,j] = bs_strike_price_100 - KammradAmEuCall(100,100,1,Periods[i],lamda[j],0.2,0.05)
+    diff_kr_strike_price_100[i,j] = bs_strike_price_100 - kr_european_call(100,100,1,Periods[i],lamda[j],0.2,0.05)
   }
 }
 
@@ -341,18 +346,18 @@ for (nm in names(values)) {
   strike_price_even_odd_steps = values[[nm]]
   
   # Black-Scholes formula for every strike price
-  bs_odd_even_steps = BlackScholesEuCall(100, strike_price_even_odd_steps, 1, 0.2, 0.05)
+  bs_odd_even_steps = bs_european_call(100, strike_price_even_odd_steps, 1, 0.2, 0.05)
 
   # Difference of the CRR from the "real" value for even steps
-  diff_crr_even_steps = sapply(even_steps, function(n) bs_odd_even_steps - BinTreeEuCall(100, strike_price_even_odd_steps, 1, n, 0.2, 0.05))
+  diff_crr_even_steps = sapply(even_steps, function(n) bs_odd_even_steps - crr_european_call(100, strike_price_even_odd_steps, 1, n, 0.2, 0.05))
   names(diff_crr_even_steps) = as.character(even_steps)
   
   # Difference of the CRR from the "real" value for odd steps
-  diff_crr_odd_steps = sapply(odd_steps, function(n) bs_odd_even_steps - BinTreeEuCall(100, strike_price_even_odd_steps, 1, n, 0.2, 0.05))
+  diff_crr_odd_steps = sapply(odd_steps, function(n) bs_odd_even_steps - crr_european_call(100, strike_price_even_odd_steps, 1, n, 0.2, 0.05))
   names(diff_crr_odd_steps) = as.character(odd_steps)
   
   # All steps together
-  diff_crr_all_steps = sapply(Periods, function(n) bs_odd_even_steps - BinTreeEuCall(100, strike_price_even_odd_steps, 1, n, 0.2, 0.05))
+  diff_crr_all_steps = sapply(Periods, function(n) bs_odd_even_steps - crr_european_call(100, strike_price_even_odd_steps, 1, n, 0.2, 0.05))
   names(diff_crr_all_steps) = as.character(Periods)
 
   # Save the above quantities in a list
@@ -413,16 +418,16 @@ diff_kr_volatility = matrix(0, length(Periods), length(volatility))
 
 # Calculate 1
 for (j in seq(1,length(volatility))) {
-  bs_volatility[j] = BlackScholesEuCall(100,100,1,volatility[j],0.05)
+  bs_volatility[j] = bs_european_call(100,100,1,volatility[j],0.05)
 }
 
 # Calculate 2-5
 for (i in seq(1,length(Periods))) {
   for (j in seq(1,length(volatility))) {
-    crr_volatility[i,j] = BinTreeEuCall(100,100,1,Periods[i],volatility[j],0.05)
-    kr_volatility[i,j] = KammradAmEuCall(100,100,1,Periods[i],1.22474,volatility[j],0.05)
-    diff_crr_volatility[i,j] = bs_volatility[j] - BinTreeEuCall(100,100,1,Periods[i],volatility[j],0.05)
-    diff_kr_volatility[i,j] = bs_volatility[j] - KammradAmEuCall(100,100,1,Periods[i],1.22474,volatility[j],0.05)
+    crr_volatility[i,j] = crr_european_call(100,100,1,Periods[i],volatility[j],0.05)
+    kr_volatility[i,j] = kr_european_call(100,100,1,Periods[i],1.22474,volatility[j],0.05)
+    diff_crr_volatility[i,j] = bs_volatility[j] - crr_european_call(100,100,1,Periods[i],volatility[j],0.05)
+    diff_kr_volatility[i,j] = bs_volatility[j] - kr_european_call(100,100,1,Periods[i],1.22474,volatility[j],0.05)
   }
 }
 
@@ -503,16 +508,16 @@ diff_kr_risk_free_rate = matrix(0, length(Periods), length(risk_free_rate))
 
 # Calculate 1
 for (j in seq(1,length(risk_free_rate))) {
-  bs_risk_free_rate[j] = BlackScholesEuCall(100,100,1,0.2,risk_free_rate[j])
+  bs_risk_free_rate[j] = bs_european_call(100,100,1,0.2,risk_free_rate[j])
 }
 
 # Calculate 2-5
 for (i in seq(1,length(Periods))) {
   for (j in seq(1,length(risk_free_rate))) {
-    crr_risk_free_rate[i,j] = BinTreeEuCall(100,100,1,Periods[i],0.2,risk_free_rate[j])
-    kr_risk_free_rate[i,j] = KammradAmEuCall(100,100,1,Periods[i],1.22474,0.2,risk_free_rate[j])
-    diff_crr_risk_free_rate[i,j] = bs_risk_free_rate[j] - BinTreeEuCall(100,100,1,Periods[i],0.2,risk_free_rate[j])
-    diff_kr_risk_free_rate[i,j] = bs_risk_free_rate[j] - KammradAmEuCall(100,100,1,Periods[i],1.22474,0.2,risk_free_rate[j])
+    crr_risk_free_rate[i,j] = crr_european_call(100,100,1,Periods[i],0.2,risk_free_rate[j])
+    kr_risk_free_rate[i,j] = kr_european_call(100,100,1,Periods[i],1.22474,0.2,risk_free_rate[j])
+    diff_crr_risk_free_rate[i,j] = bs_risk_free_rate[j] - crr_european_call(100,100,1,Periods[i],0.2,risk_free_rate[j])
+    diff_kr_risk_free_rate[i,j] = bs_risk_free_rate[j] - kr_european_call(100,100,1,Periods[i],1.22474,0.2,risk_free_rate[j])
   }
 }
 
@@ -593,16 +598,16 @@ diff_kr_maturity = matrix(0, length(Periods), length(maturity))
 
 # Calculate 1
 for (j in seq(1,length(maturity))) {
-  bs_maturity[j] = BlackScholesEuCall(100,100,maturity[j],0.2,0.05)
+  bs_maturity[j] = bs_european_call(100,100,maturity[j],0.2,0.05)
 }
 
 # Calculate 2-5
 for (i in seq(1,length(Periods))) {
   for (j in seq(1,length(maturity))) {
-    crr_maturity[i,j] = BinTreeEuCall(100,100,maturity[j],Periods[i],0.2,0.05)
-    kr_maturity[i,j] = KammradAmEuCall(100,100,maturity[j],Periods[i],1.22474,0.2,0.05)
-    diff_crr_maturity[i,j] = bs_maturity[j] - BinTreeEuCall(100,100,maturity[j],Periods[i],0.2,0.05)
-    diff_kr_maturity[i,j] = bs_maturity[j] - KammradAmEuCall(100,100,maturity[j],Periods[i],1.22474,0.2,0.05)
+    crr_maturity[i,j] = crr_european_call(100,100,maturity[j],Periods[i],0.2,0.05)
+    kr_maturity[i,j] = kr_european_call(100,100,maturity[j],Periods[i],1.22474,0.2,0.05)
+    diff_crr_maturity[i,j] = bs_maturity[j] - crr_european_call(100,100,maturity[j],Periods[i],0.2,0.05)
+    diff_kr_maturity[i,j] = bs_maturity[j] - kr_european_call(100,100,maturity[j],Periods[i],1.22474,0.2,0.05)
   }
 }
 

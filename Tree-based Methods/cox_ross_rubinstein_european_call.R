@@ -9,7 +9,7 @@
 #       r -> risk-free rate       #
 ###################################
 
-BinTreeEuCall<- function(S0,K,T,N,sigma,r){
+crr_european_call<- function(S0,K,T,N,sigma,r){
   
   dt <- T/N
   u  <- exp(sigma*sqrt(dt)) 
@@ -30,5 +30,3 @@ for (j in 0:i){
 #print(paste("European Call Option Price is:", round(tree[1,1],3)))
 return(tree[1,1])
 }
-
-BinTreeEuCall(100,100,1,80,0.2,0.05)

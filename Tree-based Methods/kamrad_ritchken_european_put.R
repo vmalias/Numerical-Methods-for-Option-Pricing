@@ -1,4 +1,4 @@
-KammradAmEuPut = function(S,K,T,N,l,sigma,r){
+kr_european_put = function(S,K,T,N,l,sigma,r){
   
   dt = T/N
   
@@ -34,9 +34,4 @@ KammradAmEuPut = function(S,K,T,N,l,sigma,r){
   #cat("Option price is:", Kammrad[1])
 }
 
-
-# Endly, the way to programm Kammrad tree, is exactly
-# the same with Boyle's tree, except for probabilities computation. 
-
-KammradAmEuPut(100,100,1,50,1.22474,0.2,0.05)
 

@@ -1,4 +1,4 @@
-KammradAmericanPut = function(S,K,T,N,l,sigma,r){
+kr_american_put = function(S,K,T,N,l,sigma,r){
   
   dt = T/N
   
@@ -30,6 +30,4 @@ KammradAmericanPut = function(S,K,T,N,l,sigma,r){
   return(Kammrad[1])
 }
 
-
-KammradAmericanPut(12,15,6/12,1000,1.22474,0.2,0.05)
 

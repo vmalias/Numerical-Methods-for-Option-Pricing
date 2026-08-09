@@ -9,7 +9,7 @@
 #       r -> risk-free rate       #
 ###################################
 
-BinTreeAmPut<- function(S0,K,T,N,sigma,r){
+crr_american_put<- function(S0,K,T,N,sigma,r){
   
   dt <- T/N
   u  <- exp(sigma*sqrt(dt)) 
@@ -32,4 +32,3 @@ BinTreeAmPut<- function(S0,K,T,N,sigma,r){
   return(tree[1])
 }
 
-BinTreeAmPut(100,100,1,50,0.2,0.05)

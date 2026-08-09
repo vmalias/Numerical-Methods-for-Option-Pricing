@@ -7,7 +7,7 @@
 # risk_free_rate : Risk-free rate                             
 
 
-black_scholes_european_call <- function(current_price,strike_price,maturity,volatility,risk_free_rate){
+bs_european_call <- function(current_price,strike_price,maturity,volatility,risk_free_rate){
   
   # d1 and d2 are parameters of the Black-Scholes formula
   d1 = (log(current_price/strike_price) + (risk_free_rate + 0.5*volatility^2)*maturity)/(volatility*sqrt(maturity))
@@ -17,6 +17,3 @@ black_scholes_european_call <- function(current_price,strike_price,maturity,vola
   premium = current_price*pnorm(d1) - strike_price*exp(-risk_free_rate*maturity)*pnorm(d2)
   return(premium)
 }
-
-# An example of inputs:
-black_scholes_european_call(100,100,1,0.2,0.05)

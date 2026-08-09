@@ -1,4 +1,4 @@
-KammradAmEuCall = function(S,K,T,N,l,sigma,r){
+kr_european_call = function(S,K,T,N,l,sigma,r){
   
   dt = T/N
   
@@ -23,8 +23,4 @@ KammradAmEuCall = function(S,K,T,N,l,sigma,r){
 }
 
 
-# Endly, the way to programm Kammrad tree, is exactly
-# the same with Boyle's tree, except for probabilities computation. 
-
-KammradAmEuCall(100,100,1,20,1.22474,0.2,0.05)
 

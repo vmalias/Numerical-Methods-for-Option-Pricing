@@ -1,4 +1,4 @@
-BinTreeEuPut<- function(S0,K,T,N,sigma,r){
+crr_european_put<- function(S0,K,T,N,sigma,r){
   
   dt <- T/N
   u  <- exp(sigma*sqrt(dt)) 
@@ -19,5 +19,3 @@ BinTreeEuPut<- function(S0,K,T,N,sigma,r){
   #print(paste("European Call Option Price is:", round(tree[1,1],3)))
   return(tree[1])
 }
-
-BinTreeEuPut(100,100,1,50,0.2,0.05)
