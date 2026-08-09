@@ -553,74 +553,94 @@ print(p)
 ggsave("distance_from_bs_risk_free_rate.png", plot = p, width = 7, height = 5, dpi = 300)
 
 
-################################### Time (T) ##################################
+#########################################################################################
+#########################################################################################
 
-Periods = seq(5,100)
-time = c(2/12, 5/12, 8/12)
-DiffKamRittime = matrix(0, length(Periods), length(time))
-KamRittime = matrix(0, length(Periods), length(time))
-DiffCRRtime = matrix(0, length(Periods), length(time))
-CRRtime = matrix(0, length(Periods), length(time))
-BStime = matrix(0, 1, length(time))
+# In this section we are going to study the behaviour of the models
+# for different maturities:
+
+maturity = seq(0.01, 1, 0.01)
+
+# We change the number of periods the lattice models should run, while this time we
+# fix the parameter λ for simplicity reasons. 
+# Furthermore we fix the values:
+# ===============================================================
+# S0 = 100
+# strike_price = 100 (ATM)
+# risk_free_rate = 0.05
+# volatility = 0.2                         
+# ===============================================================
 
 
+################################### Maturity ##################################
+
+# Matrices initialized with zeros, which for every combination of numbers of periods 
+# and strike price (Black-Scholes has no periods) contain the values of:
+
+# 1. Black-Scholes formula
+bs_maturity = matrix(0, 1, length(maturity))
+
+# 2. Cox-Ross-Rubinstein binomial model
+crr_maturity = matrix(0, length(Periods), length(maturity))
+
+# 3. Kamrad-Ritcken trinomial model
+kr_maturity = matrix(0, length(Periods), length(maturity))
+
+# 4. The distance between the binomial model and the "real value"
+diff_crr_maturity = matrix(0, length(Periods), length(maturity))
+
+# 5. The distance between the trinomial model and the "real value"
+diff_kr_maturity = matrix(0, length(Periods), length(maturity))
+
+# Calculate 1
+for (j in seq(1,length(maturity))) {
+  bs_maturity[j] = BlackScholesEuCall(100,100,maturity[j],0.2,0.05)
+}
+
+# Calculate 2-5
 for (i in seq(1,length(Periods))) {
-  for (j in seq(1,length(time))) {
-    CRRtime[i,j] = BinTreeEuCall(100,100,time[j],Periods[i],0.2,0.05)
-    KamRittime[i,j] = KammradAmEuCall(100,100,time[j],Periods[i],1.22474,0.2,0.05)
-    BStime[j] = BlackScholesEuCall(100,100,time[j],0.2,0.05)
-    DiffCRRtime[i,j] = - BinTreeEuCall(100,100,time[j],Periods[i],0.2,0.05) + BlackScholesEuCall(100,100,time[j],0.2,0.05)
-    DiffKamRittime[i,j] = - KammradAmEuCall(100,100,time[j],Periods[i],1.22474,0.2,0.05) + BlackScholesEuCall(100,100,time[j],0.2,0.05)
+  for (j in seq(1,length(maturity))) {
+    crr_maturity[i,j] = BinTreeEuCall(100,100,maturity[j],Periods[i],0.2,0.05)
+    kr_maturity[i,j] = KammradAmEuCall(100,100,maturity[j],Periods[i],1.22474,0.2,0.05)
+    diff_crr_maturity[i,j] = bs_maturity[j] - BinTreeEuCall(100,100,maturity[j],Periods[i],0.2,0.05)
+    diff_kr_maturity[i,j] = bs_maturity[j] - KammradAmEuCall(100,100,maturity[j],Periods[i],1.22474,0.2,0.05)
   }
 }
 
-colnames(CRRtime) = as.character(time)
-rownames(CRRtime) = as.character(Periods)
+named = set_dimnames(list(CRRMaturity = crr_maturity, KRMaturity = kr_maturity, DiffCRRMaturity = diff_crr_maturity, DiffKRMaturity = diff_kr_maturity),
+                       rownames_val = Periods, colnames_val = maturity)
+crr_maturity = named$CRRMaturity; kr_maturity = named$KRMaturity; diff_crr_maturity = named$DiffCRRMaturity; diff_kr_maturity = named$DiffKRMaturity
 
-colnames(KamRittime) = as.character(time)
-rownames(KamRittime) = as.character(Periods)
+# bs_maturity has no Periods dimension, so it's separate
+colnames(bs_maturity) = as.character(maturity)   
+# ==================================================================================================
 
-colnames(BStime) = as.character(time)
+# Save the values of the quantities we calculated previously in a .xlsx file, which contains
+# five different sheets that correspond to each matrix.
+data_list = list(CRR_Maturity = crr_maturity, KR_Maturity = kr_maturity, BS_Maturity = bs_maturity, Diff_CRR_Maturity = diff_crr_maturity, Diff_KR_Maturity = diff_kr_maturity)
 
-colnames(DiffCRRtime) = as.character(time)
-rownames(DiffCRRtime) = as.character(Periods)
+write.xlsx(data_list, "results_maturity.xlsx", colNames = TRUE, rowNames = TRUE)
 
-colnames(DiffKamRittime) = as.character(time)
-rownames(DiffKamRittime) = as.character(Periods)
+# Data frame with distances of both tree-based models from Black-Scholes,
+# at the maximum period count, across strike prices
+mapping_maturity <- data.frame(
+  Maturity = maturity,
+  Diff_CRR_Maturity = diff_crr_maturity[nrow(diff_crr_maturity), ],
+  Diff_KR_Maturity = diff_kr_maturity[nrow(diff_kr_maturity), ]
+)
 
-#write.xlsx(CRRtime, "CRRtime.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(KamRittime, "KamRittime.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(BStime, "BStime.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(DiffCRRtime, "DiffCRRtime.xlsx", colNames = TRUE, rowNames = TRUE)
-#write.xlsx(DiffKamRittime, "DiffKamRittime.xlsx", colNames = TRUE, rowNames = TRUE)
-
-######################### PLOTS (Time) #########################################
-
-Time = seq(0.01, 1, 0.01)
-DiffCRR_time = matrix(0, 1, length(Time))
-DiffKamRit_time = matrix(0, 1, length(Time))
-
-for (k in seq(1,length(Time))) {
-  DiffCRR_time[k] = - BinTreeEuCall(100,100,Time[k],80,0.2,0.05) + BlackScholesEuCall(100,100,Time[k],0.2,0.05)
-  DiffKamRit_time[k] = - KammradAmEuCall(100,100,Time[k],80,1.22474,0.2,0.05) + BlackScholesEuCall(100,100,Time[k],0.2,0.05)
-}
-
-colnames(DiffCRR_time) = as.character(Time)
-colnames(DiffKamRit_time) = as.character(Time)
-
-Mapping_time = data.frame(t(DiffCRR_time), t(DiffKamRit_time))
-colnames(Mapping_time) = c("CRR", "KR")
-
-ggplot(Mapping_time)+
-  geom_line(mapping = aes(Time, KR, color = 'KR'))+
-  geom_line(mapping = aes(Time, CRR, color = 'CRR'))+
+p <- ggplot(mapping_maturity) +
+  geom_line(aes(x = Maturity, y = Diff_KR_Maturity, col = "KR")) +
+  geom_line(aes(x = Maturity, y = Diff_CRR_Maturity, col = "CRR")) +
   scale_color_manual(values = c('KR' = 'cornflowerblue', 'CRR' = 'deeppink4')) +
-  labs(color = '')+
-  xlab("Time")+
-  ylab("Distance of Black-Scholes")+
-  theme_classic()+
-  theme(legend.position = "right")+
-  ggtitle("Time Analysis European Call")
+  labs(color = '') +
+  xlab("Maturity") +
+  ylab("Distance from Black-Scholes value") +
+  theme_classic() +
+  theme(legend.position = "right")
+
+print(p)
+ggsave("distance_from_bs_maturity.png", plot = p, width = 7, height = 5, dpi = 300)
 
 
 ################################### LAMDA ANALYSIS ########################################
