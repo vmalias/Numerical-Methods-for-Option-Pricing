@@ -1,34 +1,40 @@
-  ###################################
-# Binomial tree pricing           #
-# American Put option             #
-# Iput: SO -> Initial stock price #
-#       K  -> Strike price        #
-#       T -> Maturity             #
-#       N -> steps in tree        #
-#   sigma -> stock volatility     #
-#       r -> risk-free rate       #
-###################################
+# Cox-Ross-Rubinstein binomial tree option pricing model / American Put Option
 
-crr_american_put<- function(S0,K,T,N,sigma,r){
+# current_price  : Price of the underlying asset at time 0
+# strike_price   : Strike Price
+# maturity       : Maturity
+# n_steps        : Number of steps in the binomial tree
+# volatility     : Volatility of the underlying asset
+# risk_free_rate : Risk-free rate
+
+crr_american_put = function(current_price, strike_price, maturity, n_steps, volatility, risk_free_rate){
   
-  dt <- T/N
-  u  <- exp(sigma*sqrt(dt)) 
-  d  <- 1/u                  
-  p  <- (exp(r*dt) - d)/(u-d)
+  # Time increment per step
+  dt = maturity / n_steps
   
-  tree = matrix(0, nrow=N+1, ncol=N+1)
+  # Up and down factors and the corresponding risk-neutral probability
+  u = exp(volatility * sqrt(dt))
+  d = 1 / u
+  p = (exp(risk_free_rate * dt) - d) / (u - d)
   
-  for (j in 0:N){
-    tree[N+1,j+1] <- max(0,K- S0*(u^j)*d^(N-j))
+  # Tree of option values; tree[i+1, j+1] holds the value at step i, with j up-moves
+  tree = matrix(0, nrow = n_steps + 1, ncol = n_steps + 1)
+  
+  # Payoffs at maturity
+  for (j in 0:n_steps){
+    tree[n_steps + 1, j + 1] = max(0, strike_price - current_price * (u^j) * d^(n_steps - j))
   }
   
-  for (i in seq(from=N-1, to=0, by=-1)){                                
-    for (j in 0:i){                                         
-      tree[i+1,j+1] = max(K- S0*(u^j)*d^(i-j), 
-                   exp(-r*dt)*(p*tree[i+2,j+2] + (1-p)*tree[i+2,j+1]))
+  # Going backwards to calculate the option value at time 0, i.e. the premium.
+  for (i in seq(from = n_steps - 1, to = 0, by = -1)){
+    for (j in 0:i){
+      tree[i + 1, j + 1] = max(strike_price - current_price * (u^j) * d^(i - j),
+                                 exp(-risk_free_rate * dt) * (p * tree[i + 2, j + 2] + (1 - p) * tree[i + 2, j + 1]))
     }
   }
-  #print(paste("American Put Option Price is:", round(tree[1,1],3)))
-  return(tree[1])
+  
+  # Price of the option
+  premium = tree[1, 1]
+  
+  return(premium)
 }
-
