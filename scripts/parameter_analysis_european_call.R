@@ -11,7 +11,7 @@
 library(ggplot2)
 library(openxlsx)
 
-# Load the functions we are going to use
+# Load the functions we are going to employ
 source("black_scholes_european_call.R")
 source("cox_ross_rubinstein_european_call.R")
 source("kamrad_ritchken_european_call.R")
@@ -129,7 +129,7 @@ mapping_strike_price <- data.frame(
   Diff_KR_Strike_Price = diff_kr_strike_price[nrow(diff_kr_strike_price), ]
 )
 
-p <- ggplot(mapping_strike_price) +
+p = ggplot(mapping_strike_price) +
   geom_line(aes(x = Strike_Price, y = Diff_KR_Strike_Price, col = "KR")) +
   geom_line(aes(x = Strike_Price, y = Diff_CRR_Strike_Price, col = "CRR")) +
   scale_color_manual(values = c('KR' = 'cornflowerblue', 'CRR' = 'deeppink4')) +
