@@ -70,8 +70,8 @@ compute_rmse = function(crr_price_fn, kr_price_fn, benchmark_price, current_pric
 }
 
 # Plots log(RMSE) against log(number of steps) for CRR and KR
-plot_rmse_convergence = function(rmse_table, periods, title){
-  ggplot(rmse_table) +
+plot_rmse_convergence = function(rmse_table, periods, title, plot_name){
+  p = ggplot(rmse_table) +
     geom_line(mapping = aes(log(periods), log(RMSE_CRR), color = 'CRR')) +
     geom_line(mapping = aes(log(periods), log(RMSE_KR), color = 'KR')) +
     scale_color_manual(values = c('CRR' = 'deeppink4', 'KR' = 'cornflowerblue')) +
@@ -81,6 +81,9 @@ plot_rmse_convergence = function(rmse_table, periods, title){
     theme_classic() +
     theme(legend.position = "top") +
     ggtitle(title)
+
+  print(p)
+  ggsave(plot_name, plot = p, width = 7, height = 5, dpi = 300)
 }
 
 
@@ -91,12 +94,14 @@ bs_call_price = mapply(bs_european_call, current_price, strike_price, maturity, 
 results_call = compute_rmse(crr_european_call, kr_european_call, bs_call_price, current_price, strike_price,
                              maturity, volatility, risk_free_rate, periods)
 
-write.xlsx(bs_call_price, "european_call_bs.xlsx", colNames = FALSE, rowNames = FALSE)
-write.xlsx(results_call$crr_price, "european_call_crr.xlsx", colNames = TRUE, rowNames = FALSE)
-write.xlsx(results_call$kr_price, "european_call_kr.xlsx", colNames = TRUE, rowNames = FALSE)
-write.xlsx(results_call$rmse_table, "european_call_rmse.xlsx", colNames = TRUE, rowNames = TRUE)
+# Save the results for european call
+write.xlsx(list(BS_Price = bs_call_price, CRR_Price = results_call$crr_price, KR_Price = results_call$kr_price, RMSE = results_call$rmse_table), 
+            "rmse_european_call.xlsx",
+            colNames = TRUE,  
+            rowNames = TRUE
+)
 
-plot_rmse_convergence(results_call$rmse_table, periods, "European Call: RMSE Convergence")
+plot_rmse_convergence(results_call$rmse_table, periods, "RMSE European Call", "rmse_european_call.png")
 
 
 ######################### EUROPEAN PUT #########################################
@@ -106,26 +111,29 @@ bs_put_price = mapply(bs_european_put, current_price, strike_price, maturity, vo
 results_put = compute_rmse(crr_european_put, kr_european_put, bs_put_price, current_price, strike_price,
                             maturity, volatility, risk_free_rate, periods)
 
-write.xlsx(bs_put_price, "european_put_bs.xlsx", colNames = FALSE, rowNames = FALSE)
-write.xlsx(results_put$crr_price, "european_put_crr.xlsx", colNames = TRUE, rowNames = FALSE)
-write.xlsx(results_put$kr_price, "european_put_kr.xlsx", colNames = TRUE, rowNames = FALSE)
-write.xlsx(results_put$rmse_table, "european_put_rmse.xlsx", colNames = TRUE, rowNames = TRUE)
+# Save the results for european put
+write.xlsx(list(BS_Price = bs_put_price, CRR_Price = results_put$crr_price, KR_Price = results_put$kr_price, RMSE = results_put$rmse_table), 
+            "rmse_european_put.xlsx",
+            colNames = TRUE,  
+            rowNames = TRUE
+)
 
-plot_rmse_convergence(results_put$rmse_table, periods, "European Put: RMSE Convergence")
+plot_rmse_convergence(results_put$rmse_table, periods, "RMSE European Put", "rmse_european_put.png")
 
 
 ######################### AMERICAN PUT #########################################
 
-# No closed-form benchmark exists for the American Put, so the Kamrad-Ritchken
-# tree with 1000 steps is used as the benchmark instead of Black-Scholes
+# We set the benchmark model as the Kamrad-Ritchken trinomial tree with 1000 iterations
 kr_1000steps_price = mapply(kr_american_put, current_price, strike_price, maturity, 1000, 1.22474, volatility, risk_free_rate)
 
 results_american_put = compute_rmse(crr_american_put, kr_american_put, kr_1000steps_price, current_price, strike_price,
                                      maturity, volatility, risk_free_rate, periods)
 
-write.xlsx(kr_1000steps_price, "american_put_kr1000.xlsx", colNames = FALSE, rowNames = FALSE)
-write.xlsx(results_american_put$crr_price, "american_put_crr.xlsx", colNames = TRUE, rowNames = FALSE)
-write.xlsx(results_american_put$kr_price, "american_put_kr.xlsx", colNames = TRUE, rowNames = FALSE)
-write.xlsx(results_american_put$rmse_table, "american_put_rmse.xlsx", colNames = TRUE, rowNames = TRUE)
+# Save the results for american put
+write.xlsx(list(BS_Price = kr_1000steps_price, CRR_Price = results_american_put$crr_price, KR_Price = results_american_put$kr_price, RMSE = results_american_put$rmse_table), 
+            "rmse_american_put.xlsx",
+            colNames = TRUE,  
+            rowNames = TRUE
+)
 
-plot_rmse_convergence(results_american_put$rmse_table, periods, "American Put: RMSE Convergence")
+plot_rmse_convergence(results_american_put$rmse_table, periods, "RMSE American Put", "rmse_american_put.png")
